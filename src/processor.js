@@ -2,9 +2,11 @@ import BezierEasing from 'bezier-easing'
 
 let video
 const radius = 200
+const radius_x2 = 400
+const radius_x6 = 1200
 
 const fadeMilliseconds = 2000
-const timeoutDuration = 30
+const timeoutDuration = 40
 const fadeCountStop = Math.round(fadeMilliseconds / timeoutDuration)
 export const triggerInfo = { 
 	fadeCount: fadeCountStop,
@@ -51,18 +53,13 @@ export let processor = {
 	}
 }
 
-function lerp (left, right, alpha) {
-	return left + (right - left) * alpha
-}
-
-
 function createTheEffect (data, height, width) {
 	
 	const easeOut = BezierEasing(.13,.57,.49,.97)
 	let fadeAlpha =  triggerInfo.fadeCount / fadeCountStop
 	fadeAlpha = easeOut(fadeAlpha)
 	triggerInfo.fadeCount++
-
+	
 	const easeInOut = BezierEasing(.34,.01,.66,1)
 	
 	const posX = triggerInfo.posX
@@ -83,24 +80,21 @@ function createTheEffect (data, height, width) {
 		for (let j = jStart; j < jEnd; j++) {
 			
 			const r = 4 * (j + widthTimesI)
-			const g = r + 1
-			const b = g + 1
-			
 			dataCopy.push(data[r])
-			dataCopy.push(data[g])
-			dataCopy.push(data[b])
+			dataCopy.push(data[r+1])
+			dataCopy.push(data[r+2])
+			
 		}
-		
 	}
 	
 	for (let i = iStart; i < iEnd; i++) {
 		
 		const widthTimesI = width * i
+		const yDist = posY - i
 		
 		for (let j = jStart; j < jEnd; j++) {
 			
 			const xDist = posX - j
-			const yDist = posY - i
 			let distTotal = Math.sqrt(xDist*xDist + yDist*yDist)
 			
 			const r = 4 * (j + widthTimesI)
@@ -108,63 +102,68 @@ function createTheEffect (data, height, width) {
 			const b = g + 1
 			const [sat, lumin] = getHSL(data[r], data[g], data[b])
 			
-			if (lumin > 0.99) {
-				data[r] = 0
-				data[g] = 0
-				data[b] = 0
-			}
-			
-			else if (distTotal < radius) {
+			// if (lumin > 0.99) {
+				// 	data[r] = 0
+				// 	data[g] = 0
+				// 	data[b] = 0
+				// }
 				
-				const distRatio = distTotal / radius
-				let offsetRatio = 1 - distRatio
-				offsetRatio = easeInOut(offsetRatio)
-				
-				let xDiff = xDist * 4
-				let yDiff = yDist * 4
-				
-				const offsetX = Math.round(offsetRatio * xDiff) * 3
-				const offsetY = Math.round(offsetRatio * yDiff) * 6 * radius
-				
-				const dataCopyIndex = convert_data_red_index_to_dataCopy_red_index(j, i, jStart, iStart)
-				
-				const newR = dataCopyIndex + offsetX + offsetY
-				
-				let oR = dataCopy[newR] || 255
-				let oG = dataCopy[newR + 1] || 255
-				let oB = dataCopy[newR + 2] || 255
-				
-				oR = lerp(oR, sat * 255, offsetRatio)
-				oG = lerp(oG, lumin * 255, offsetRatio)
-				oB = lerp(oB, sat * lumin * 510, offsetRatio)
-				// oG = lerp(oG, dataCopy[newR - 4] || 255, offsetRatio)
-				
-				data[r] = lerp(oR, data[r], fadeAlpha) 
-				data[g] = lerp(oG, data[g], fadeAlpha)
-				data[b] = lerp(oB, data[b], fadeAlpha)
-
+				if (distTotal < radius) {
+					
+					const distRatio = distTotal / radius
+					const offsetRatio = easeInOut(1 - distRatio)
+					
+					let xDiff = xDist * 4
+					let yDiff = yDist * 4
+					
+					const offsetX = ~~(offsetRatio * xDiff) * 3
+					const offsetY = ~~(offsetRatio * yDiff) * radius_x6
+					
+					const dataCopyIndex = convert_data_red_index_to_dataCopy_red_index(j, i, jStart, iStart)
+					
+					const newR = dataCopyIndex + offsetX + offsetY
+					
+					let oR = dataCopy[newR] || 255
+					let oG = dataCopy[newR + 1] || 255
+					let oB = dataCopy[newR + 2] || 255
+					
+					oR = lerp(oR, sat * 255, offsetRatio)
+					oG = lerp(oG, lumin * 255, offsetRatio)
+					oB = lerp(oB, sat * lumin * 510, offsetRatio)
+					// oG = lerp(oG, dataCopy[newR - 4] || 255, offsetRatio)
+					
+					data[r] = lerp(oR, data[r], fadeAlpha) 
+					data[g] = lerp(oG, data[g], fadeAlpha)
+					data[b] = lerp(oB, data[b], fadeAlpha)
+					
+				}
 			}
 		}
+		
+		return data
 	}
 	
-	return data
-}
-
-function getHSL (r, g, b) {
-	const max = Math.max(r, g, b) / 255
-	const min = Math.min(r, g, b) / 255
-	const lumin = (0.5 * (max + min))
-	const sat = lumin >= 0.5 ? (max - min) / (2 - max - min) : (max - min) / (max + min)
-	return [sat, lumin]
+	function lerp (left, right, alpha) {
+		return left + (right - left) * alpha
+	}
+	
+	function getHSL (r, g, b) {
+		const max = Math.max(r, g, b) / 255
+		const min = Math.min(r, g, b) / 255
+		const maxMinusMin = max - min
+		const maxPlusMin = max + min
+		const lumin = (0.5 * maxPlusMin)
+		const sat = lumin >= 0.5 ? maxMinusMin / (2 - maxMinusMin) : (maxMinusMin) / (maxPlusMin)
+		return [sat, lumin]
 }
 
 function convert_data_red_index_to_dataCopy_red_index (x, y, xStart, yStart) {
 	const copyXPos = x - xStart
 	const copyYPos = y - yStart
-	return 3 * (copyXPos + copyYPos * radius * 2)
+	return 3 * (copyXPos + copyYPos * radius_x2)
 }
 
-const cosineInterpolate = (ratio) => {
-  return 1 - Math.cos(ratio*3.14159)
-		// + Math.sin(4*ratio*3.14159)/4
-};
+// const cosineInterpolate = (ratio) => {
+//   return 1 - Math.cos(ratio*3.14159)
+// 		// + Math.sin(4*ratio*3.14159)/4
+// };
