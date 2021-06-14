@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { processor } from './processor'
+import { processor, triggerInfo } from './processor'
 
 function App() {
 
@@ -11,11 +11,25 @@ function App() {
     })
   }, [])
 
+  const handleCanvasClick = (event) => {
+    if (event.currentTarget.id === 'canvas') {
+      const clientRect = event.currentTarget.getBoundingClientRect()
+      const posX = event.clientX - clientRect.left
+      const posY = event.clientY - clientRect.top
+      triggerInfo.fadeCount = 0,
+      triggerInfo.posX = posX,
+      triggerInfo.posY = posY
+    }
+  }
+
   return (
     <div className="App">
       asdf
 
-      <canvas id='canvas'></canvas>
+      <canvas
+        id='canvas'
+        onClick={handleCanvasClick}
+      ></canvas>
 
       <video 
         autoPlay muted loop
