@@ -24,8 +24,8 @@ function App() {
       <canvas
         id='canvas'
         // aspect ratio: 1.77777777
-        width='650'
-        height='366'
+        width='1250'
+        height='703'
         // onClick={handleCanvasClick}
       ></canvas>
     </div>

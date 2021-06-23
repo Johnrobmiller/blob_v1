@@ -13,7 +13,7 @@ export const vsSource = `
 	}
 `;
 
-  // Fragment shader program
+// Fragment shader program
 
 export const fsSource = `
 
@@ -23,7 +23,7 @@ export const fsSource = `
 	void main(void) {
 
 		highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
-		gl_FragColor = texelColor;
+		gl_FragColor = texelColor * vec4(1, 0, 1, 1);
 
 	}
 `;
