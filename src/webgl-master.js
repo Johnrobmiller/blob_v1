@@ -36,9 +36,6 @@ export default function renderBlob() {
       textureCoord: gl.getAttribLocation(shaderProgram, 'aTextureCoord'),
     },
     uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-      modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
-      normalMatrix: gl.getUniformLocation(shaderProgram, 'uNormalMatrix'),
       uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
     }
   };
